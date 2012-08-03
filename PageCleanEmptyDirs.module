@@ -39,7 +39,7 @@ class PageCleanEmptyDirs extends WireData implements Module, ConfigurableModule 
 	 * But depending on how high you make it, you may hit the PHP execution time limit.
 	 *
 	 */
-	const maxDirs = 1000;
+	const maxDirs = 5000;
 
 	public function init() { }
 
