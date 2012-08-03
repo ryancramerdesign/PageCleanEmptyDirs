@@ -1,0 +1,99 @@
+<?php
+
+/**
+ * Clean empty file directors for ProcessWire pages
+ *
+ * ProcessWire 2.x 
+ * Copyright (C) 2012 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ *
+ */
+
+class PageCleanEmptyDirs extends WireData implements Module, ConfigurableModule {
+
+	/**
+	 * getModuleInfo is a module required by all modules to tell ProcessWire about them
+	 *
+	 * @return array
+	 *
+	 */
+	public static function getModuleInfo() {
+
+		return array(
+			'title' => 'Clean Empty Page File Dirs', 
+			'version' => 1, 
+			'author' => 'Ryan Cramer',
+			'summary' => "Goes through all of your /site/assets/files/ directories and removes those that have no files in them.",
+			'singular' => true, 
+			'autoload' => false, 
+			);
+	}
+
+	public function init() { }
+
+	protected function hasFiles($path) {
+		$dir = opendir($path); 
+		if(!$dir) return false;
+		$has = false;
+		while(!$has && ($f = readdir($dir)) !== false) $has = $f !== '..' && $f !== '.';
+		return $has;
+	}
+
+	public function clean() {
+
+		$path = wire('config')->paths->files; 	
+		$results = array();
+
+		foreach(new DirectoryIterator($path) as $file) {
+			if(!$file->isDir() || $file->isDot()) continue; 
+			$pageID = $file->getBasename();
+			if(!ctype_digit("$pageID")) continue; 
+			$pagePath = $path . $pageID . '/';
+			if($this->hasFiles($pagePath)) continue; 
+			$results[$pageID] = rmdir($pagePath);
+		}	
+
+		return $results; 
+	}
+
+	/**
+	 * Module configuration functions as a place to display our logged errors
+	 *
+	 */
+	public static function getModuleConfigInputfields(array $data) {
+
+		$cleaner = wire('modules')->get('PageCleanEmptyDirs'); 
+
+		if(wire('input')->post->_submit_clean) {
+
+			$results = $cleaner->clean();
+			$url = wire('config')->urls->files; 
+
+			foreach($results as $pageID => $good) {
+				$dir = $url . $pageID . '/';
+				if($good) $cleaner->message("Removed: $dir"); 
+					else $cleaner->error("Error removing: $dir"); 
+			}
+
+			$cleaner->message("Processed " . count($results) . " directories total."); 
+			if(!count($results)) $cleaner->message("Looks like you are already clean!"); 
+		}
+			
+		$inputfields = new InputfieldWrapper();
+		$f = wire('modules')->get('InputfieldCheckbox'); 
+		$f->attr('name', '_submit_clean'); 
+		$f->attr('value', '1'); 
+		$f->attr('checked', false);
+		$f->label = 'Clean empty directories now';
+		$f->description = 'To clean empty directories in /site/assets/files/ check this box and submit. Pages with file/image fields require a directory, so you should expect that some of the removed directories will be re-created by these pages.';
+		$f->notes = "Note that this module doesn't do anything other than what's on this screen (you may wish to uninstall it when done).";
+		$inputfields->add($f); 
+
+		return $inputfields; 
+	}
+}
+
