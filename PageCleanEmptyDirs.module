@@ -25,7 +25,7 @@ class PageCleanEmptyDirs extends WireData implements Module, ConfigurableModule 
 
 		return array(
 			'title' => 'Clean Empty Page File Dirs', 
-			'version' => 1, 
+			'version' => 2, 
 			'author' => 'Ryan Cramer',
 			'summary' => "Goes through all of your /site/assets/files/ directories and removes those that have no files in them.",
 			'singular' => true, 
