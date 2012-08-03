@@ -33,6 +33,14 @@ class PageCleanEmptyDirs extends WireData implements Module, ConfigurableModule 
 			);
 	}
 
+	/**
+	 * Feel free to change the number below if you need to process more directories. 
+	 *
+	 * But depending on how high you make it, you may hit the PHP execution time limit.
+	 *
+	 */
+	const maxDirs = 1000;
+
 	public function init() { }
 
 	protected function hasFiles($path) {
@@ -40,6 +48,7 @@ class PageCleanEmptyDirs extends WireData implements Module, ConfigurableModule 
 		if(!$dir) return false;
 		$has = false;
 		while(!$has && ($f = readdir($dir)) !== false) $has = $f !== '..' && $f !== '.';
+		closedir($dir); 
 		return $has;
 	}
 
@@ -47,6 +56,7 @@ class PageCleanEmptyDirs extends WireData implements Module, ConfigurableModule 
 
 		$path = wire('config')->paths->files; 	
 		$results = array();
+		$n = 0;
 
 		foreach(new DirectoryIterator($path) as $file) {
 			if(!$file->isDir() || $file->isDot()) continue; 
@@ -55,6 +65,10 @@ class PageCleanEmptyDirs extends WireData implements Module, ConfigurableModule 
 			$pagePath = $path . $pageID . '/';
 			if($this->hasFiles($pagePath)) continue; 
 			$results[$pageID] = rmdir($pagePath);
+			if(++$n >= self::maxDirs) {
+				$this->error("Max directory limit of " . self::maxDirs . " reached. Run this module again to move on to the next 1000, or edit the module file and update the maxDirs constant at the top to a higher number."); 
+				break;
+			}
 		}	
 
 		return $results; 
@@ -72,15 +86,19 @@ class PageCleanEmptyDirs extends WireData implements Module, ConfigurableModule 
 
 			$results = $cleaner->clean();
 			$url = wire('config')->urls->files; 
+			$numGood = 0;
 
 			foreach($results as $pageID => $good) {
-				$dir = $url . $pageID . '/';
-				if($good) $cleaner->message("Removed: $dir"); 
-					else $cleaner->error("Error removing: $dir"); 
+				if($good) {
+					$numGood++;
+				} else {
+					$dir = $url . $pageID . '/';
+					$cleaner->error("Error removing $dir"); 
+				}
 			}
 
-			$cleaner->message("Processed " . count($results) . " directories total."); 
 			if(!count($results)) $cleaner->message("Looks like you are already clean!"); 
+				else $cleaner->message("Successfully removed $numGood empty directories in $url"); 
 		}
 			
 		$inputfields = new InputfieldWrapper();
