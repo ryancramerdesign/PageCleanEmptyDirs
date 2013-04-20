@@ -4,11 +4,10 @@
  * Clean empty file directors for ProcessWire pages
  *
  * ProcessWire 2.x 
- * Copyright (C) 2012 by Ryan Cramer 
+ * Copyright (C) 2013 by Ryan Cramer
  * Licensed under GNU/GPL v2, see LICENSE.TXT
  * 
- * http://www.processwire.com
- * http://www.ryancramer.com
+ * http://processwire.com
  *
  *
  */
@@ -24,10 +23,10 @@ class PageCleanEmptyDirs extends WireData implements Module, ConfigurableModule 
 	public static function getModuleInfo() {
 
 		return array(
-			'title' => 'Clean Empty Page File Dirs', 
-			'version' => 2, 
+			'title' => __('Clean Empty Page File Dirs', __FILE__),
+			'version' => 3,
 			'author' => 'Ryan Cramer',
-			'summary' => "Goes through all of your /site/assets/files/ directories and removes those that have no files in them.",
+			'summary' => __("Goes through all of your /site/assets/files/ directories and removes those that have no files in them.", __FILE__),
 			'singular' => true, 
 			'autoload' => false, 
 			);
